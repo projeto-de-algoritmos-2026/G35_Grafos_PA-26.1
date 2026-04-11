@@ -7,6 +7,74 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    
+    <h1>Caminho mínimo Metrô</h1>
+    <p>Selecione as estações:</p>
+
+    <form id="formRota">
+        <select id="origem">
+            {% for estacao in estacoes %}
+                <option value="{{estacao.id}}">{{ estacao.nome }}</option>
+            {% endfor %}
+        </select>
+        
+        <select id="destino">
+            {% for estacao in estacoes %}
+                <option value="{{estacao.id}}">{{ estacao.nome }}</option>
+            {% endfor %}
+        </select>
+        
+        <select id ="criterio">
+            <option value="tempo">Melhor tempo</option>
+            <option value="baldeacao">Menos baldeações</option>
+        </select>
+        
+        <button type="submit">Buscar Rota</button>
+    </form>
+
+    <pre id="resultado"></pre>
+
+    <script>
+        const form = document.getElementById('formRota');
+        const divResultado = document.getElementById('resultado')
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const origemEscolhida = document.getElementById('origem').value;
+            const destinoEscolhido = document.getElementById('destino').value;
+            const criterioEscolhido = document.getElementById('criterio').value;
+
+            divResultado.innerHTML = "Calculando a mehor rota"
+
+            fetch('/api/calcular', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    origem: origemEscolhida,
+                    destino: destinoEscolhido,
+                    criterio: criterioEscolhido
+                })
+            })
+
+            .then(response => response.json())
+            .then(data => {
+                if (data.erro) {
+                    divResultado.innerHTML = `<strong>Erro: ${data.erro}</strong>`;
+                    return;
+                }
+
+                let htmlResposta = `<h3>Rota Encontrada </h3>`;
+                htmlResposta += `<p>Tempo total: ${data.tempo_total} minutos</p>`;
+                htmlResposta += `<p>Baldeações: ${data.qtd_baldeacoes}</p>`;
+
+                divResultado.innerHTML = htmlResposta
+            })
+            .catch(erro => {
+                console.error("Erro na requisição", erro);
+                divResultado.innerHTML = `<p>Erro na comunicação</p>`;
+            });
+        });
+    </script>
 </body>
 </html>
