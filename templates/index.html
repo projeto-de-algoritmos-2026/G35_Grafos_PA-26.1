@@ -4,36 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metrô SP</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Caminho mínimo Metrô</h1>
-    <p>Selecione as estações:</p>
+    <div id="sidebar">
+        <img src="{{ url_for('static', filename='metrosp.png') }}" alt="Mapa do Metrô">
 
-    <form id="formRota">
-        <select id="origem">
-            {% for estacao in estacoes %}
-                <option value="{{estacao.id}}">{{ estacao.nome }}</option>
-            {% endfor %}
-        </select>
-        
-        <select id="destino">
-            {% for estacao in estacoes %}
-                <option value="{{estacao.id}}">{{ estacao.nome }}</option>
-            {% endfor %}
-        </select>
-        
-        <select id ="criterio">
-            <option value="tempo">Melhor tempo</option>
-            <option value="baldeacao">Menos baldeações</option>
-        </select>
-        
-        <button type="submit">Buscar Rota</button>
-    </form>
+        <form id="formRota" >
 
-    <pre id="resultado"></pre>
+            <select id="origem" required>
+                <option value="" class="padrao" disabled selected hidden>Origem</option>
+                {% for estacao in estacoes %}
+                    <option value="{{estacao.id}}">{{ estacao.nome }}</option>
+                {% endfor %}
+            </select>
+
+            <select id="destino" required>
+                <option value="" disabled selected hidden>Destino</option>
+                {% for estacao in estacoes %}
+                    <option value="{{estacao.id}}">{{ estacao.nome }}</option>
+                {% endfor %}
+            </select>
+
+            <select id ="criterio" >
+                <option value="tempo">Melhor tempo</option>
+                <option value="baldeacao">Menos baldeações</option>
+            </select>
+            
+            <button type="submit">Buscar Rota</button>
+        </form>
+
+        <div id="resultado"></div>
+    </div>
+
+    <div id="mapa-leaflet"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        // script do mapa
+        const map = L.map('mapa-leaflet').setView([-23.5505, -46.6333], 12);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        const camadaRota = L.layerGroup().addTo(map);
+        const coresLinhas = {
+            'azul': '#00539c',
+            'verde': '#009a63',
+            'vermelha': '#e21f2d',
+            'amarela': '#ffcb04',
+            'lilas': '#a62e92',
+            'prata': '#afafaf'
+        };
+
+        function desenharRota(caminhoDetalhado) {
+            camadaRota.clearLayers();
+
+            if (!caminhoDetalhado || caminhoDetalhado.length === 0) return;
+
+            const coordenadasLinha = [];
+
+            caminhoDetalhado.forEach(estacao => {
+                const latLng = [parseFloat(estacao.lat), parseFloat(estacao.lon)];
+                coordenadasLinha.push(latLng);
+            });
+
+            const linhaTraco = L.polyline(coordenadasLinha, {
+                color: '#333',
+                weight: 4,
+                dashArray: '10, 10'
+            });
+            linhaTraco.addTo(camadaRota);
+            
+            map.fitBounds(linhaTraco.getBounds(), { padding: [50, 50] });
+
+            caminhoDetalhado.forEach(estacao => {
+                const latLng = [parseFloat(estacao.lat), parseFloat(estacao.lon)];
+                const corDaLinha = coresLinhas[estacao.linha] || '#333';
+
+                const bolinha = L.circleMarker(latLng, {
+                    radius: 12,
+                    fillColor: corDaLinha,
+                    color: '#fff',
+                    opacity: 1,
+                    weight: 3,
+                    fillOpacity: 1
+                });
+
+                bolinha.bindPopup(`<b>${estacao.nome}</b><br>Linha ${estacao.linha}`);
+                bolinha.addTo(camadaRota);
+            });
+        }
+
+        // script do form
         const form = document.getElementById('formRota');
         const divResultado = document.getElementById('resultado')
 
@@ -64,11 +131,12 @@
                     return;
                 }
 
-                let htmlResposta = `<h3>Rota Encontrada </h3>`;
-                htmlResposta += `<p>Tempo total: ${data.tempo_total} minutos</p>`;
-                htmlResposta += `<p>Baldeações: ${data.qtd_baldeacoes}</p>`;
+                let htmlResposta = `<h3>ROTA ENCONTRADA! </h3>`;
+                htmlResposta += `<p><strong>Tempo total:</strong> ${data.tempo_total} minutos</p>`;
+                htmlResposta += `<p><strong>Baldeações:</strong> ${data.qtd_baldeacoes}</p>`;
 
                 divResultado.innerHTML = htmlResposta
+                desenharRota(data.caminho_detalhado);
             })
             .catch(erro => {
                 console.error("Erro na requisição", erro);

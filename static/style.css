@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+    --cor1: #155CA3;
+}
+
+* {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.03em;  
+}
+
+body {
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+img {
+    margin: 20px 0px 30px 0px;
+    width: 100%;
+}
+
+#sidebar {
+    width: 400px;
+    padding: 20px;
+    background-color: #ebebeb;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+select {
+    border-radius: 5px;
+    height: 50px;
+    text-align: center !important;
+    text-align-last: center !important;
+}
+
+option {
+    text-align: left !important;
+}
+
+
+button {
+    color: white;
+    background-color: var(--cor1);
+    border-radius: 5px;
+    height: 50px;
+    font-weight: bold;
+}
+
+#formRota {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#resultado {
+    margin-top: 20px;
+    font-size: 1em;
+}
+
+#resultado > h3 {
+    font-size: 1.03em;
+    color: var(--cor1);
+    text-align: center;
+    font-weight: bolder;
+}
+
+#mapa-leaflet {
+    flex-grow: 1;
+    height: 100%;
+}
